@@ -1,4 +1,4 @@
-version: '3'
+version: '3.9'
 services:
   db:
     container_name: db
@@ -9,14 +9,23 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: nubes
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
   app:
     container_name: app
     build:
       context: ./
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8084:8080"
     environment:
-        SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/nubes
+          - SPRING_DATASOURCE_URL = jdbc:mysql://db:3306/nubes
+          - WAIT_HOSTS=db:3308
+          - WAIT_HOSTS_TIMEOUT=300
+          - WAIT_SLEEP_INTERVAL=30
+          - WAIT_HOST_CONNECT_TIMEOUT=30
     depends_on:
-      - db
+      db:
+          condition: service_healthy
